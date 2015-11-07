@@ -47,7 +47,8 @@ void Type::set_parent(Type* t)
      
 Type* Type::find()
 {
-
+	// Every type will have a parent
+	// The parent whose parent is itself is the equivalence class representative
   Type* old = parent;
   Type* t = old->parent;
   while(old != t)
@@ -60,18 +61,22 @@ Type* Type::find()
 
 void Type::compute_union(Type* other)
 {
+	// Find the representatives (again,fix this)
   Type* t1 = this->find();
   Type* t2 = other->find();
+	// if constant set the second as child of first
   if(t1->tk == TYPE_CONSTANT)
   {
       t2->set_parent(t1);
       return;
   }
+	// if other constant set the first as child of the second
   if(t2->tk == TYPE_CONSTANT)
   {
       t1->set_parent(t2);
       return;
   }
+	// same for functions
   if(t1->tk == TYPE_FUNCTION)
   {
       t2->set_parent(t1);
@@ -82,6 +87,7 @@ void Type::compute_union(Type* other)
       t1->set_parent(t2);
       return;
   }
+	// for variables always set the second as child of the first
   t2->set_parent(t1);
   
 }
@@ -89,30 +95,38 @@ void Type::compute_union(Type* other)
 
 bool Type::unify(Type* other)
 {
+	// finds the representatives of the EQ class that these types are a part of
   Type* t1 = this->find();
   Type* t2 = other->find();
+	// if the representatives are the same then the union is nothing
   if(t1 == t2) return true;
-  
+  // if they are both functions
   if(t1->tk == TYPE_FUNCTION && t2->tk == TYPE_FUNCTION)
   {
-      t1->compute_union(t2);
-	FunctionType* f1 = static_cast<FunctionType*>(t1);
-	FunctionType* f2 = static_cast<FunctionType*>(t2);
-	if(f1->get_name() != f2->get_name()) return false;
-	const vector<Type*> & arg1 = f1->get_args();
-	const vector<Type*> & arg2 = f2->get_args();
-	if(arg1.size() != arg2.size()) return false;
-	for(unsigned int i = 0; i < arg1.size(); i++)
-	{
-		if(arg1[i]->unify(arg2[i]) == false) return false;
-	}
-	return true;
+		// compute their union
+  	t1->compute_union(t2);
+		FunctionType* f1 = static_cast<FunctionType*>(t1);
+		FunctionType* f2 = static_cast<FunctionType*>(t2);
+		// if they are different function names the union is wrong
+		if(f1->get_name() != f2->get_name()) return false;
+		const vector<Type*> & arg1 = f1->get_args();
+		const vector<Type*> & arg2 = f2->get_args();
+		// if the ares are not the same then the union is wrong
+		if(arg1.size() != arg2.size()) return false;
+		for(unsigned int i = 0; i < arg1.size(); i++)
+		{
+			if(arg1[i]->unify(arg2[i]) == false) return false;
+		}
+		return true;
   }
+	// if one of them is a variable the union always works ?? wat
   if(t1->tk == TYPE_VARIABLE || t2->tk == TYPE_VARIABLE) {
       t1->compute_union(t2);
       return true;
   }
   
+	// return if the union doesnt work if there is a type mismatch
+
   return false;
   
   
