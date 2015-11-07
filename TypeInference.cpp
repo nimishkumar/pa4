@@ -8,6 +8,9 @@
 
 TypeInference::TypeInference(Expression * e)
 {
+	this->program = e
+	infer(e);
+/*
 	this->program = e;
 	
 	Type* t1 = ConstantType::make("Int");
@@ -52,6 +55,28 @@ TypeInference::TypeInference(Expression * e)
 	Type::print_all_types();
 
 	
-
+*/
 }
 
+Type* TypeInference::infer(Expression *e){
+	// tbi
+}
+
+Type* TypeInference::infer_binop(AstBinOp *e){
+	Expression * e1=e->get_first();
+	Expression * e2=e->get_second();
+	Type* infer_e1 = infer(e1);
+	Type* infer_e2 = infer(e2);
+
+	if(e->get_binop_type() == PLUS){
+
+	}
+}
+
+Type* TypeInference::infer_unop(AstUnOp *e){
+	// to be implemented
+}
+
+Type* TypeInference::infer_expression_list(AstExpressionList *l){
+	// to be implemented
+}
