@@ -59,7 +59,7 @@ TypeInference::TypeInference(Expression * e)
 }
 
 Type* TypeInference::infer(Expression *e){
-	// tbi
+	
 }
 
 Type* TypeInference::infer_binop(AstBinOp *e){
@@ -69,8 +69,43 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 	Type* infer_e2 = infer(e2);
 
 	if(e->get_binop_type() == PLUS){
-
+    // tbi
+	}else if(e->get_binop_type() == CONS){
+    // to be implemented
+	}else{
+		// to be implemented
 	}
+
+
+
+
+	//if(e->get_binop_type() == PLUS){
+	//	// to be implemented
+	//}if(e->get_binop_type() == MINUS){
+  //  // to be implemented
+	//}if(e->get_binop_type() == TIMES){
+  //  // to be implemented
+	//}if(e->get_binop_type() == DIVIDE){
+  //  // to be implemented
+	//}if(e->get_binop_type() == PLUS){
+  //  // to be implemented
+	//}if(e->get_binop_type() == AND){
+  //  // to be implemented
+	//}if(e->get_binop_type() == OR){
+  //  // to be implemented
+	//}if(e->get_binop_type() == EQ){
+  //  // to be implemented
+	//}if(e->get_binop_type() == NEQ){
+  //  // to be implemented
+	//}if(e->get_binop_type() == LT){
+  //  // to be implemented
+	//}if(e->get_binop_type() == LEQ){
+  //  // to be implemented
+	//}if(e->get_binop_type() == GT){
+  //  // to be implemented
+	//}if(e->get_binop_type() == GEQ){
+  //  // to be implemented
+	//}
 }
 
 Type* TypeInference::infer_unop(AstUnOp *e){

@@ -7,10 +7,11 @@ ConstantType::ConstantType(const string& name):Type(TYPE_CONSTANT)
 }
    
 
-ConstantType* ConstantType::make(const string& name)
+ConstantType* ConstantType::make(const string& name,constant_kind typ)
 {
   ConstantType* t = new ConstantType(name);
   t = static_cast<ConstantType*>(get_type(t));
+	constantType = typ;
   return t;
   
 }
@@ -23,6 +24,9 @@ bool ConstantType::operator<(const Type& other)
   return name < ct.name;
 }
 
+constant_kind ConstantType::get_constant_type(){
+	return constantType;
+}
 
 string ConstantType::to_string()
 {
