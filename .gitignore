@@ -1,3 +1,5 @@
 l-type-inference
 *.o
 parser.output
+*.aux
+*.log
