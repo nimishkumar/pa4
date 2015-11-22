@@ -8,11 +8,11 @@
 
 TypeInference::TypeInference(Expression * e)
 {
-	this->program = e
-	infer(e);
-/*
 	this->program = e;
-	
+	Type::print_all_types();
+	infer(e);
+	Type::print_all_types();
+/*
 	Type* t1 = ConstantType::make("Int");
 	Type* t2 = ConstantType::make("String");
 	Type* t3 = ConstantType::make("Int");
@@ -47,19 +47,32 @@ TypeInference::TypeInference(Expression * e)
 
 		cout << "Type 1:" << t1->to_string() << "Rep: " << t1->find()->to_string() << endl;
 		cout <<	"Type 2:" << t2->to_string() << "Rep: " << t2->find()->to_string() << endl;
-	}
-		cout << "Type 1:" << t1->to_string() << "Rep: " << t1->find()->to_string() << endl;
-		cout <<	"Type 2:" << var1->to_string() << "Rep: " << var1->find()->to_string() << endl;
+	} cout << "Type 1:" << t1->to_string() << "Rep: " << t1->find()->to_string() << endl; cout <<	"Type 2:" << var1->to_string() << "Rep: " << var1->find()->to_string() << endl;
 
 	
 	Type::print_all_types();
-
-	
 */
 }
 
 Type* TypeInference::infer(Expression *e){
-	
+	Type* res = NULL;
+	cout << "before switch" << endl;
+
+	switch(e->get_type()) {
+		case AST_BINOP:
+		{
+			cout << "in switch case binop" << endl;
+			AstBinOp* b = static_cast<AstBinOp*>(e);
+			res = infer_binop(b);
+			break;
+		}
+		case AST_INT:
+		{
+			res = ConstantType::make("int", INT_CONSTANT);
+			break;
+		}
+	}
+	return res;
 }
 
 Type* TypeInference::infer_binop(AstBinOp *e){
@@ -68,50 +81,49 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 	Type* infer_e1 = infer(e1);
 	Type* infer_e2 = infer(e2);
 
-	if(e->get_binop_type() == PLUS){
-    // tbi
-	}else if(e->get_binop_type() == CONS){
-    // to be implemented
-	}else{
-		// to be implemented
+	if(e->get_binop_type() == CONS) {
+		assert(infer_e1->unify(infer_e2));
+		cout << "unified in cons" << endl;
+		assert(false);
 	}
-
-
-
-
-	//if(e->get_binop_type() == PLUS){
-	//	// to be implemented
-	//}if(e->get_binop_type() == MINUS){
-  //  // to be implemented
-	//}if(e->get_binop_type() == TIMES){
-  //  // to be implemented
-	//}if(e->get_binop_type() == DIVIDE){
-  //  // to be implemented
-	//}if(e->get_binop_type() == PLUS){
-  //  // to be implemented
-	//}if(e->get_binop_type() == AND){
-  //  // to be implemented
-	//}if(e->get_binop_type() == OR){
-  //  // to be implemented
-	//}if(e->get_binop_type() == EQ){
-  //  // to be implemented
-	//}if(e->get_binop_type() == NEQ){
-  //  // to be implemented
-	//}if(e->get_binop_type() == LT){
-  //  // to be implemented
-	//}if(e->get_binop_type() == LEQ){
-  //  // to be implemented
-	//}if(e->get_binop_type() == GT){
-  //  // to be implemented
-	//}if(e->get_binop_type() == GEQ){
-  //  // to be implemented
-	//}
+	else if(e->get_binop_type() == PLUS) {
+		assert(infer_e1->unify(infer_e2));
+		cout << "unified in plus" << endl;
+		assert(infer_e1->get_kind()==TYPE_CONSTANT);
+		cout << "retuning in plus" << endl;
+		return infer_e1;
+	}
+	else if(e->get_binop_type() == EQ) {
+		assert(infer_e1->unify(infer_e2));
+		cout << "unified in equals" << endl;
+		assert(infer_e1->get_kind()==TYPE_CONSTANT);
+		return ConstantType::make("int", INT_CONSTANT);
+	}
+	else if(e->get_binop_type() == MINUS ||
+			e->get_binop_type() == TIMES ||
+			e->get_binop_type() == DIVIDE ||
+			e->get_binop_type() == AND ||
+			e->get_binop_type() == OR ||
+			e->get_binop_type() == NEQ ||
+			e->get_binop_type() == LT ||
+			e->get_binop_type() == LEQ ||
+			e->get_binop_type() == GT ||
+			e->get_binop_type() == GEQ) {
+		assert(infer_e1->unify(infer_e2));
+		cout << "unified in binop" << endl;
+		ConstantType* t1 = static_cast<ConstantType*>(infer_e1);
+		assert(t1->get_constant_type() == INT_CONSTANT);
+		return infer_e1;
+	}
+	assert(false);
 }
 
 Type* TypeInference::infer_unop(AstUnOp *e){
 	// to be implemented
+	return NULL;
 }
 
 Type* TypeInference::infer_expression_list(AstExpressionList *l){
 	// to be implemented
+	return NULL;
 }
