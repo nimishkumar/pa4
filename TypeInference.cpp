@@ -1,4 +1,4 @@
-
+#include "NilType.h"
 #include "ConstantType.h"
 #include "VariableType.h"
 #include "FunctionType.h"
@@ -10,7 +10,8 @@ TypeInference::TypeInference(Expression * e)
 {
 	this->program = e;
 	Type::print_all_types();
-	infer(e);
+	Type* t = infer(e);
+	cout << "res = " << t->to_string() << endl;
 	Type::print_all_types();
 /*
 	Type* t1 = ConstantType::make("Int");
@@ -71,6 +72,27 @@ Type* TypeInference::infer(Expression *e){
 			res = ConstantType::make("int", INT_CONSTANT);
 			break;
 		}
+		case AST_LAMBDA:
+		{
+			//res = FunctionType
+			break;
+		}
+		case AST_STRING:
+		{
+			res = ConstantType::make("string", STRING_CONSTANT);
+			break;
+		}
+		case AST_NIL:
+		{
+			res = NilType::make("nil");
+			break;
+		}
+		case AST_UNOP:
+		{
+			AstUnOp* b = static_cast<AstUnOp*>(e);
+			res = infer_unop(b);
+			break;
+		}
 	}
 	return res;
 }
@@ -96,7 +118,8 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 	else if(e->get_binop_type() == EQ) {
 		assert(infer_e1->unify(infer_e2));
 		cout << "unified in equals" << endl;
-		assert(infer_e1->get_kind()==TYPE_CONSTANT);
+		assert(infer_e1->get_kind()==TYPE_CONSTANT ||
+				infer_e1->get_kind()==TYPE_NIL);
 		return ConstantType::make("int", INT_CONSTANT);
 	}
 	else if(e->get_binop_type() == MINUS ||
@@ -118,9 +141,20 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 	assert(false);
 }
 
-Type* TypeInference::infer_unop(AstUnOp *e){
-	// to be implemented
-	return NULL;
+Type* TypeInference::infer_unop(AstUnOp *b){
+	Expression* e = b->get_expression();
+	Type* infer_e = infer(e);
+
+	if(b->get_unop_type() == PRINT ||
+		b->get_unop_type() == ISNIL) {
+		return ConstantType::make("int", INT_CONSTANT);
+	}
+	else if(b->get_unop_type() == HD ||
+			b->get_unop_type() == TL) {
+		cout << "in unop hd/tl" << endl;
+		assert(false);
+	}
+	assert(false);
 }
 
 Type* TypeInference::infer_expression_list(AstExpressionList *l){
