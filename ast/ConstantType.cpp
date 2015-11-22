@@ -11,7 +11,7 @@ ConstantType* ConstantType::make(const string& name,constant_kind typ)
 {
   ConstantType* t = new ConstantType(name);
   t = static_cast<ConstantType*>(get_type(t));
-	constantType = typ;
+	t->constantType = typ;
   return t;
   
 }

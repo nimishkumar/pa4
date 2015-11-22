@@ -8,7 +8,7 @@
 #include <string>
 
 using namespace std;
-enum constant_kind {STRING_CONSTANT,INT_CONSTANT}
+enum constant_kind {STRING_CONSTANT,INT_CONSTANT};
 
  class ConstantType: public Type
  {

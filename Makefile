@@ -1,5 +1,7 @@
-CC = g++-4.8
-CFLAGS = -g -Wall -std=c++0x
+#CC = g++-4.8
+
+CC = clang++
+CFLAGS = -g -std=c++0x -w
 INC=-. ./ast
 INC_PARAMS=$(foreach d, $(INC), -I$d)
 
