@@ -65,13 +65,13 @@ void Type::compute_union(Type* other)
   Type* t1 = this->find();
   Type* t2 = other->find();
 	// if constant set the second as child of first
-  if(t1->tk == TYPE_CONSTANT)
+  if(t1->tk == TYPE_CONSTANT || t1->tk == TYPE_USERDEFINED)
   {
       t2->set_parent(t1);
       return;
   }
 	// if other constant set the first as child of the second
-  if(t2->tk == TYPE_CONSTANT)
+  if(t2->tk == TYPE_CONSTANT || t1->tk == TYPE_USERDEFINED)
   {
       t1->set_parent(t2);
       return;
