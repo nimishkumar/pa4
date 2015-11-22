@@ -9,7 +9,7 @@
  class TypeComparator;
 
 using namespace std;
- enum type_kind {TYPE_CONSTANT, TYPE_FUNCTION, TYPE_VARIABLE, TYPE_USERDEFINED};
+ enum type_kind {TYPE_USERDEFINED, TYPE_NIL, TYPE_CONSTANT, TYPE_FUNCTION, TYPE_VARIABLE};
 
 
  class Type
