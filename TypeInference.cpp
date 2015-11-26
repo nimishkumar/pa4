@@ -8,6 +8,7 @@
 
 TypeInference::TypeInference(Expression * e)
 {
+	type_tab.push();
 	this->program = e;
 	Type::print_all_types();
 	Type* t = infer(e);
@@ -57,24 +58,50 @@ TypeInference::TypeInference(Expression * e)
 
 Type* TypeInference::infer(Expression *e){
 	Type* res = NULL;
-	cout << "before switch" << endl;
 
 	switch(e->get_type()) {
-		case AST_BINOP:
+		case AST_BINOP:				//case 0
 		{
 			cout << "in switch case binop" << endl;
 			AstBinOp* b = static_cast<AstBinOp*>(e);
 			res = infer_binop(b);
 			break;
 		}
-		case AST_INT:
+		case AST_IDENTIFIER:		//case 1
+		{
+			AstIdentifier* id = static_cast<AstIdentifier*>(e);
+			Type* type = type_tab.find(id);
+			if(type==NULL) {
+				cout << "Runtime error in type " << e->to_value() << endl;
+				cout << "Identifier "+id->get_id()+" is not bound in current context" << endl;
+				exit(0);
+			}
+			res = type;
+			break;
+		}
+		case AST_INT:				//case 2
 		{
 			res = ConstantType::make("int", INT_CONSTANT);
 			break;
 		}
-		case AST_LAMBDA:
+		case AST_LAMBDA:			//case 3
 		{
-			//res = FunctionType
+			AstLambda* lambda = static_cast<AstLambda*>(e);
+			vector<Type*> args;
+			args.push_back(VariableType::make("param"));
+			args.push_back(VariableType::make("body"));
+			res = FunctionType::make("lambda",args);
+			break;
+		}
+		case AST_LET:				//case 4
+		{
+			AstLet* let = static_cast<AstLet*>(e);
+			AstIdentifier* id = static_cast<AstIdentifier*>(let->get_id());
+			Type* type = infer(let->get_val());
+			type_tab.push();
+			type_tab.add(id, type);
+			res = infer(let->get_body());
+			type_tab.pop();
 			break;
 		}
 		case AST_STRING:
@@ -82,15 +109,42 @@ Type* TypeInference::infer(Expression *e){
 			res = ConstantType::make("string", STRING_CONSTANT);
 			break;
 		}
+		case AST_IDENTIFIER_LIST:
+		{
+			break;
+		}
+		case AST_EXPRESSION_LIST:
+		{
+			break;
+		}
+		case AST_BRANCH:
+		{
+			break;
+		}
 		case AST_NIL:
 		{
 			res = NilType::make("nil");
+			break;
+		}
+		case AST_LIST:
+		{
 			break;
 		}
 		case AST_UNOP:
 		{
 			AstUnOp* b = static_cast<AstUnOp*>(e);
 			res = infer_unop(b);
+			break;
+		}
+		case AST_READ:
+		{
+			AstRead* r = static_cast<AstRead*>(e);
+			if(r->read_integer()) {
+				res = ConstantType::make("int", INT_CONSTANT);
+			}
+			else {
+				res = ConstantType::make("string", STRING_CONSTANT);
+			}
 			break;
 		}
 	}

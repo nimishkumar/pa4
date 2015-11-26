@@ -1,5 +1,5 @@
 #include "TypeTable.h"
-#include "ast/type.h"
+#include "ast/Type.h"
 
 TypeTable::TypeTable(){
 
@@ -11,9 +11,9 @@ void TypeTable::push(){
 }
 
 Type* TypeTable::find(AstIdentifier *id){
-	for(vector<map<AstIdentifier*, Expression*> >::reverse_iterator it = values.rbegin(); it != values.rend(); it++)
+	for(vector<map<AstIdentifier*, Type*> >::reverse_iterator it = values.rbegin(); it != values.rend(); it++)
 	{
-		ap<AstIdentifier*, Type*> & cur = *it;
+		map<AstIdentifier*, Type*> & cur = *it;
 		if(cur.count(id) > 0) return cur[id];
 	}
 	return NULL;
