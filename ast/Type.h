@@ -1,15 +1,14 @@
- #ifndef TYPE_H_
- #define TYPE_H_
+#ifndef TYPE_H_
+#define TYPE_H_
+
 #include <set>
 #include <string>
-
  
  class Type;
-
  class TypeComparator;
 
 using namespace std;
- enum type_kind {TYPE_USERDEFINED, TYPE_NIL, TYPE_CONSTANT, TYPE_FUNCTION, TYPE_VARIABLE};
+ enum type_kind {TYPE_USERDEFINED, TYPE_NIL, TYPE_CONSTANT, TYPE_INT_LIST, TYPE_STRING_LIST, TYPE_FUNCTION, TYPE_VARIABLE};
 
 
  class Type
