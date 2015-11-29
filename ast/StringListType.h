@@ -11,10 +11,11 @@ using namespace std;
 class StringListType: public Type
 {
 private:
-	StringListType(const string& name);
+	StringListType(const string& name, int size);
 	string name;
 public:
-	static StringListType* make(const string& name);
+	int size;
+	static StringListType* make(const string& name, int size);
 	virtual bool operator<(const Type& other);
 	virtual string to_string();
 };

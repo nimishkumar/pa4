@@ -1,13 +1,14 @@
 #include "StringListType.h"
 
-StringListType::StringListType(const string& name):Type(TYPE_STRING_LIST)
+StringListType::StringListType(const string& name, int size):Type(TYPE_STRING_LIST)
 {
 	this->name = name;
+	this->size = size;
 }
 
-StringListType* StringListType::make(const string& name)
+StringListType* StringListType::make(const string& name, int size)
 {
-	StringListType* t = new StringListType(name);
+	StringListType* t = new StringListType(name, size);
 	t = static_cast<StringListType*>(get_type(t));
 	return t;
 }

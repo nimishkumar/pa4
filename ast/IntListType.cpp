@@ -1,13 +1,14 @@
 #include "IntListType.h"
   
-IntListType::IntListType(const string& name):Type(TYPE_INT_LIST)
+IntListType::IntListType(const string& name, int size):Type(TYPE_INT_LIST)
 {
 	this->name = name;
+	this->size = size;
 } 
  
-IntListType* IntListType::make(const string& name)
+IntListType* IntListType::make(const string& name, int size)
 {
-	IntListType* t = new IntListType(name);
+	IntListType* t = new IntListType(name, size);
 	t = static_cast<IntListType*>(get_type(t));
 	return t;
 } 

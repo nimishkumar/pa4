@@ -166,13 +166,16 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 				if(infer_e2->get_kind() == TYPE_CONSTANT){
 					ConstantType* const2 = static_cast<ConstantType*>(infer_e2);
 					if(const1->get_constant_type() == const2->get_constant_type()){
-						return IntListType::make("intList");
+						return IntListType::make("intList",2);
 					}
 					cout << "in binop cons" << endl;
 					assert(false);
 				}
-				if(infer_e2->get_kind() == TYPE_INT_LIST)
-					return infer_e2;
+				if(infer_e2->get_kind() == TYPE_INT_LIST){
+					IntListType* list = static_cast<IntListType*>(infer_e2);
+					list->size++;
+					return list;
+				}
 				cout << "in binop cons" << endl;
 				assert(false);
 			}
@@ -180,13 +183,16 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 				if(infer_e2->get_kind() == TYPE_CONSTANT){
 					ConstantType* const2 = static_cast<ConstantType*>(infer_e2);
 					if(const1->get_constant_type() == const2->get_constant_type()){
-						return StringListType::make("stringList");
+						return StringListType::make("stringList",2);
 					}
 					cout << "in binop cons" << endl;
 					assert(false);
 				}
-				if(infer_e2->get_kind() == TYPE_STRING_LIST)
-					return infer_e2;
+				if(infer_e2->get_kind() == TYPE_STRING_LIST){
+					StringListType* list = static_cast<StringListType*>(infer_e2);
+					list->size++;
+					return list;
+				}
 				cout << "in binop cons" << endl;
 				assert(false);
 			}
@@ -248,8 +254,20 @@ Type* TypeInference::infer_unop(AstUnOp *b){
 			return ConstantType::make("string",STRING_CONSTANT);
 		return infer_e;
 	}else if(b->get_unop_type() == TL) {
-		if(infer_e->get_kind() == TYPE_INT_LIST || infer_e->get_kind() == TYPE_STRING_LIST)
-			return infer_e;
+		if(infer_e->get_kind() == TYPE_INT_LIST) {
+			IntListType* list = static_cast<IntListType*>(infer_e);
+			if(list->size<3)
+				return ConstantType::make("int",INT_CONSTANT);
+			list->size--;
+			return list;
+		}
+		if(infer_e->get_kind() == TYPE_STRING_LIST) {
+			StringListType* list = static_cast<StringListType*>(infer_e);
+			if(list->size<=3)
+				return ConstantType::make("string",STRING_CONSTANT);
+			list->size--;
+			return list;
+		}
 		return NilType::make("nil");
 	}
 	assert(false);
