@@ -4,7 +4,8 @@
 #include "FunctionType.h"
 #include "ast/expression.h"
 #include "TypeInference.h"
-
+#include "IntListType.h"
+#include "StringListType.h"
 
 TypeInference::TypeInference(Expression * e)
 {
@@ -203,10 +204,17 @@ Type* TypeInference::infer_unop(AstUnOp *b){
 		b->get_unop_type() == ISNIL) {
 		return ConstantType::make("int", INT_CONSTANT);
 	}
-	else if(b->get_unop_type() == HD ||
-			b->get_unop_type() == TL) {
+	else if(b->get_unop_type() == HD) {
 		cout << "in unop hd/tl" << endl;
-		assert(false);
+		if(infer_e->get_kind() == TYPE_INT_LIST)
+			return ConstantType::make("int",INT_CONSTANT);
+		if(infer_e->get_kind() == TYPE_STRING_LIST)
+			return ConstantType::make("string",STRING_CONSTANT);
+		return infer_e;
+	}else if(b->get_unop_type() == TL) {
+		if(infer_e->get_kind() == TYPE_INT_LIST || infer_e->get_kind() == TYPE_STRING_LIST)
+			return infer_e;
+		return NilType::make("nil");
 	}
 	assert(false);
 }
