@@ -159,9 +159,45 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 	Type* infer_e2 = infer(e2);
 
 	if(e->get_binop_type() == CONS) {
-		assert(infer_e1->unify(infer_e2));
-		cout << "unified in cons" << endl;
+		if(infer_e1->get_kind() == TYPE_CONSTANT) {
+			ConstantType* const1 = static_cast<ConstantType*>(infer_e1);
+			
+			if(const1->get_constant_type() == INT_CONSTANT){
+				if(infer_e2->get_kind() == TYPE_CONSTANT){
+					ConstantType* const2 = static_cast<ConstantType*>(infer_e2);
+					if(const1->get_constant_type() == const2->get_constant_type()){
+						return IntListType::make("intList");
+					}
+					cout << "in binop cons" << endl;
+					assert(false);
+				}
+				if(infer_e2->get_kind() == TYPE_INT_LIST)
+					return infer_e2;
+				cout << "in binop cons" << endl;
+				assert(false);
+			}
+			else if(const1->get_constant_type() == STRING_CONSTANT){
+				if(infer_e2->get_kind() == TYPE_CONSTANT){
+					ConstantType* const2 = static_cast<ConstantType*>(infer_e2);
+					if(const1->get_constant_type() == const2->get_constant_type()){
+						return StringListType::make("stringList");
+					}
+					cout << "in binop cons" << endl;
+					assert(false);
+				}
+				if(infer_e2->get_kind() == TYPE_STRING_LIST)
+					return infer_e2;
+				cout << "in binop cons" << endl;
+				assert(false);
+			}
+			else{
+				assert(false);
+			}
+		}
+		cout << "First object in Cons must be of Constant Type" << endl;
 		assert(false);
+		//assert(infer_e1->unify(infer_e2));
+		//cout << "unified in cons" << endl;
 	}
 	else if(e->get_binop_type() == PLUS) {
 		assert(infer_e1->unify(infer_e2));
