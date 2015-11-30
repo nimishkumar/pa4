@@ -68,7 +68,7 @@ Type* TypeInference::infer(Expression *e){
 	switch(e->get_type()) {
 		case AST_BINOP:				//case 0
 		{
-			cout << "in switch case binop" << endl;
+			//cout << "in switch case binop" << endl;
 			AstBinOp* b = static_cast<AstBinOp*>(e);
 			res = infer_binop(b);
 			break;
@@ -123,6 +123,20 @@ Type* TypeInference::infer(Expression *e){
 		}
 		case AST_BRANCH:
 		{
+			AstBranch* branch = static_cast<AstBranch*>(e);
+			Expression* e1 = branch->get_pred();
+			Expression* e2 = branch->get_then_exp();
+			Expression* e3 = branch->get_else_exp();
+			Type* t1 = infer(e1);
+			if(t1->get_kind()!=TYPE_CONSTANT ||
+				(static_cast<ConstantType*>(t1))->get_constant_type()!=INT_CONSTANT)
+				reportError("Predicate in conditional must be an integer");
+			Type* t2 = infer(e2);
+			Type* t3 = infer(e3);
+			if(t2->get_kind()!=t3->get_kind()) {
+				reportError("Then and Else types in conditional must match");
+			}
+			res = t2;
 			break;
 		}
 		case AST_NIL:
@@ -212,7 +226,8 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 		}
 		return infer_e1;
 	}
-	else if(e->get_binop_type() == EQ) {
+	else if(e->get_binop_type() == EQ ||
+			e->get_binop_type() == NEQ) {
 		if(!(infer_e1->unify(infer_e2))) {
 			reportError("Unified Failed in EQ");
 		}
@@ -227,12 +242,11 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 			e->get_binop_type() == DIVIDE ||
 			e->get_binop_type() == AND ||
 			e->get_binop_type() == OR ||
-			e->get_binop_type() == NEQ ||
 			e->get_binop_type() == LT ||
 			e->get_binop_type() == LEQ ||
 			e->get_binop_type() == GT ||
 			e->get_binop_type() == GEQ) {
-		if(infer_e1->unify(infer_e2)) {
+		if(!infer_e1->unify(infer_e2)) {
 			reportError("Unified Failed in Generic Bin Op");
 		}
 		ConstantType* t1 = static_cast<ConstantType*>(infer_e1);
@@ -253,7 +267,7 @@ Type* TypeInference::infer_unop(AstUnOp *b){
 		return ConstantType::make("int", INT_CONSTANT);
 	}
 	else if(b->get_unop_type() == HD) {
-		cout << "in unop hd/tl" << endl;
+		//cout << "in unop hd/tl" << endl;
 		if(infer_e->get_kind() == TYPE_INT_LIST)
 			return ConstantType::make("int",INT_CONSTANT);
 		if(infer_e->get_kind() == TYPE_STRING_LIST)
