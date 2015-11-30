@@ -91,9 +91,15 @@ Type* TypeInference::infer(Expression *e){
 		case AST_LAMBDA:			//case 3
 		{
 			AstLambda* lambda = static_cast<AstLambda*>(e);
+			AstIdentifier* id = lambda->get_formal();
 			vector<Type*> args;
 			args.push_back(VariableType::make("param"));
-			args.push_back(VariableType::make("body"));
+			type_tab.push();
+			type_tab.add(id, VariableType::make(id->get_id()));
+			Type* body_t = infer(lambda->get_body());
+			type_tab.pop();
+			args.push_back(body_t);
+			//args.push_back(VariableType::make("body"));
 			res = FunctionType::make("lambda",args);
 			break;
 		}
@@ -119,6 +125,39 @@ Type* TypeInference::infer(Expression *e){
 		}
 		case AST_EXPRESSION_LIST:
 		{
+			/*
+			AstExpressionList* list = static_cast<AstExpressionList*>(e);
+			vector<Expression*> exps = list->get_expressions();
+			if(infer(exps[0])->get_kind() != TYPE_FUNCTION)
+				reportError("Only lambda expressions can be applied to other expressions");
+			Expression* exp_lambda = exps[0];
+			int counter = 0;
+			while(exp_lambda->get_type()==AST_LAMBDA) {
+				counter++;
+				exp_lambda = static_cast<AstLambda*>(exp_lambda)->get_body();
+			}
+			for(int i=0; i<exps.size()-1; i++) {
+				if(i==0)
+					lambda = static_cast<AstLambda*>(exps[0]);
+				else {
+					if(infer(lambda->get_body())->get_kind() == TYPE_FUNCTION) {
+						counter++;
+						lambda = static_cast<AstLambda*>(lambda->get_body());
+					}
+					else
+						reportError("Only lambda expressions can be applied to other expressions");
+				}
+				AstIdentifier* id = lambda->get_formal();
+				type_tab.push();
+				type_tab.add(id, infer(exps[exps.size()-1-i])->get_kind());
+			}
+			if(counter<exps.size()-1) {
+				//TODO
+			}
+			else if(counter>exps.size()-1) {
+				reportError("Only lambda expressions can be applied to other expressions");
+			}
+			*/
 			break;
 		}
 		case AST_BRANCH:
@@ -170,12 +209,57 @@ Type* TypeInference::infer(Expression *e){
 }
 
 Type* TypeInference::infer_binop(AstBinOp *e){
+	//cout << "in infer_binop" << endl;
 	Expression * e1=e->get_first();
 	Expression * e2=e->get_second();
 	Type* infer_e1 = infer(e1);
 	Type* infer_e2 = infer(e2);
 
 	if(e->get_binop_type() == CONS) {
+		//both variable type
+		if(infer_e1->get_kind() == TYPE_VARIABLE &&
+			infer_e2->get_kind() == TYPE_VARIABLE) {
+			return VariableType::make("list");
+		}
+		//first one variable type
+		if(infer_e1->get_kind() == TYPE_VARIABLE) {
+			if(infer_e2->get_kind() == TYPE_CONSTANT){
+				ConstantType* const2 = static_cast<ConstantType*>(infer_e2);
+				if(const2->get_constant_type() == INT_CONSTANT) {
+					infer_e1->unify(ConstantType::make("int",INT_CONSTANT));
+					return IntListType::make("list",2);
+				}
+				if(const2->get_constant_type() == STRING_CONSTANT) {
+					infer_e1->unify(ConstantType::make("string",STRING_CONSTANT));
+					return StringListType::make("list",2);
+				}
+			}
+			if(infer_e2->get_kind() == TYPE_INT_LIST){
+				infer_e1->unify(ConstantType::make("int",INT_CONSTANT));
+				IntListType* list = static_cast<IntListType*>(infer_e2);
+				list->size++;
+				return list;
+			}
+			if(infer_e2->get_kind() == TYPE_STRING_LIST){
+				infer_e1->unify(ConstantType::make("string",STRING_CONSTANT));
+				StringListType* list = static_cast<StringListType*>(infer_e2);
+				list->size++;
+				return list;
+			}
+			reportError("Cons Using Invalid Type");
+		}
+		//second one variable type
+		if(infer_e2->get_kind() == TYPE_VARIABLE) {
+			if(infer_e1->get_kind() == TYPE_CONSTANT) {
+				ConstantType* const1 = static_cast<ConstantType*>(infer_e1);
+				if(const1->get_constant_type()==INT_CONSTANT)
+					return IntListType::make("list",1);
+				if(const1->get_constant_type()==STRING_CONSTANT)
+					return StringListType::make("list",1);
+			}
+			reportError("Cons Using Invalid Type");
+		}
+		//both constant type
 		if(infer_e1->get_kind() == TYPE_CONSTANT) {
 			ConstantType* const1 = static_cast<ConstantType*>(infer_e1);
 			
@@ -217,7 +301,16 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 		}
 		reportError("First object in Cons must be of Constant Type");
 	}
-	else if(e->get_binop_type() == PLUS) {
+
+	infer_e1->unify(infer_e2);
+	infer_e1 = infer_e1->find();
+	//cout << infer_e1->get_kind() << endl;
+	//cout << infer_e2->get_kind() << endl;
+	if(infer_e1->get_kind()==TYPE_VARIABLE) {
+		return infer_e1;
+	}
+
+	if(e->get_binop_type() == PLUS) {
 		if(!(infer_e1->unify(infer_e2))) {
 			reportError("Unified Failed in Plus");
 		}
