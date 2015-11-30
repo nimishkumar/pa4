@@ -21,6 +21,7 @@ public:
 	Type* infer_binop(AstBinOp *e);
 	Type* infer_unop(AstUnOp *e);
 	Type* infer_expression_list(AstExpressionList* l);
+	void reportError(string err);
 };
 
 #endif /* TYPE_INFERENCE_H_ */

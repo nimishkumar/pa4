@@ -57,6 +57,11 @@ TypeInference::TypeInference(Expression * e)
 */
 }
 
+void TypeInference::reportError(string err){
+	cout << "Type Inference Error :: " + err << endl;
+	exit(1);
+}
+
 Type* TypeInference::infer(Expression *e){
 	Type* res = NULL;
 
@@ -73,9 +78,7 @@ Type* TypeInference::infer(Expression *e){
 			AstIdentifier* id = static_cast<AstIdentifier*>(e);
 			Type* type = type_tab.find(id);
 			if(type==NULL) {
-				cout << "Runtime error in type " << e->to_value() << endl;
-				cout << "Identifier "+id->get_id()+" is not bound in current context" << endl;
-				exit(0);
+				reportError("Identifier "+id->get_id()+" is not bound in current context");
 			}
 			res = type;
 			break;
@@ -168,16 +171,16 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 					if(const1->get_constant_type() == const2->get_constant_type()){
 						return IntListType::make("intList",2);
 					}
-					cout << "in binop cons" << endl;
-					assert(false);
+					reportError("Cons Using Invalid Type");
+					//cout << "in binop cons" << endl;
+					//assert(false);
 				}
 				if(infer_e2->get_kind() == TYPE_INT_LIST){
 					IntListType* list = static_cast<IntListType*>(infer_e2);
 					list->size++;
 					return list;
 				}
-				cout << "in binop cons" << endl;
-				assert(false);
+				reportError("Cons Using Invalid Type");
 			}
 			else if(const1->get_constant_type() == STRING_CONSTANT){
 				if(infer_e2->get_kind() == TYPE_CONSTANT){
@@ -185,38 +188,38 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 					if(const1->get_constant_type() == const2->get_constant_type()){
 						return StringListType::make("stringList",2);
 					}
-					cout << "in binop cons" << endl;
-					assert(false);
+					reportError("Cons Using Invalid Type");
 				}
 				if(infer_e2->get_kind() == TYPE_STRING_LIST){
 					StringListType* list = static_cast<StringListType*>(infer_e2);
 					list->size++;
 					return list;
 				}
-				cout << "in binop cons" << endl;
-				assert(false);
+				reportError("Cons Using Invalid Type");
 			}
 			else{
-				assert(false);
+				reportError("Cons Using Invalid Type");
 			}
 		}
-		cout << "First object in Cons must be of Constant Type" << endl;
-		assert(false);
-		//assert(infer_e1->unify(infer_e2));
-		//cout << "unified in cons" << endl;
+		reportError("First object in Cons must be of Constant Type");
 	}
 	else if(e->get_binop_type() == PLUS) {
-		assert(infer_e1->unify(infer_e2));
-		cout << "unified in plus" << endl;
-		assert(infer_e1->get_kind()==TYPE_CONSTANT);
-		cout << "retuning in plus" << endl;
+		if(!(infer_e1->unify(infer_e2))) {
+			reportError("Unified Failed in Plus");
+		}
+		if(!(infer_e1->get_kind()==TYPE_CONSTANT)) {
+			reportError("Type has to be of Type Constant for plus");
+		}
 		return infer_e1;
 	}
 	else if(e->get_binop_type() == EQ) {
-		assert(infer_e1->unify(infer_e2));
-		cout << "unified in equals" << endl;
-		assert(infer_e1->get_kind()==TYPE_CONSTANT ||
-				infer_e1->get_kind()==TYPE_NIL);
+		if(!(infer_e1->unify(infer_e2))) {
+			reportError("Unified Failed in EQ");
+		}
+		if(!(infer_e1->get_kind()==TYPE_CONSTANT ||
+				infer_e1->get_kind()==TYPE_NIL)) {
+			reportError("Type Error in EQ");
+		}
 		return ConstantType::make("int", INT_CONSTANT);
 	}
 	else if(e->get_binop_type() == MINUS ||
@@ -229,10 +232,13 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 			e->get_binop_type() == LEQ ||
 			e->get_binop_type() == GT ||
 			e->get_binop_type() == GEQ) {
-		assert(infer_e1->unify(infer_e2));
-		cout << "unified in binop" << endl;
+		if(infer_e1->unify(infer_e2)) {
+			reportError("Unified Failed in Generic Bin Op");
+		}
 		ConstantType* t1 = static_cast<ConstantType*>(infer_e1);
-		assert(t1->get_constant_type() == INT_CONSTANT);
+		if(!(t1->get_constant_type() == INT_CONSTANT)) {
+			reportError("Type Mismatch in Generic Bin Op");
+		}
 		return infer_e1;
 	}
 	assert(false);
@@ -270,7 +276,7 @@ Type* TypeInference::infer_unop(AstUnOp *b){
 		}
 		return NilType::make("nil");
 	}
-	assert(false);
+	reportError("Invalid Unop");
 }
 
 Type* TypeInference::infer_expression_list(AstExpressionList *l){
