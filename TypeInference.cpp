@@ -241,7 +241,7 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 		}
 		return infer_e1;
 	}
-	assert(false);
+	reportError("Invalid BinOp");
 }
 
 Type* TypeInference::infer_unop(AstUnOp *b){
