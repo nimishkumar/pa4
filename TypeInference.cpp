@@ -82,9 +82,11 @@ Type* TypeInference::infer(Expression *e){
 			Type* type = type_tab.find(id);
 			if(type==NULL) {
 				// If the identifier is not apart of the current type enviornment report an error
-				reportError("Identifier "+id->get_id()+" is not bound in current context");
+				//reportError("Identifier "+id->get_id()+" is not bound in current context");
+				res = VariableType::make(id->get_id());
 			}
-			res = type;
+			else
+				res = type;
 			break;
 		}
 		case AST_INT:				//case 2
@@ -98,10 +100,11 @@ Type* TypeInference::infer(Expression *e){
 			AstIdentifier* id = lambda->get_formal();
 			vector<Type*> args;
 			// Set the parameter for the Lambda as a Variable Type
-			args.push_back(VariableType::make("param"));
+			VariableType* varType = VariableType::make(id->get_id());
+			args.push_back(varType);
 			type_tab.push();
 			// Set the type of the parameter to variable type in the Type Enviornment
-			type_tab.add(id, VariableType::make(id->get_id()));
+			type_tab.add(id, varType);
 			// Infer on the body of the Lambda
 			Type* body_t = infer(lambda->get_body());
 			// remove the temporary parameter variable from the Type Enviornment
@@ -116,6 +119,19 @@ Type* TypeInference::infer(Expression *e){
 			AstLet* let = static_cast<AstLet*>(e);
 			AstIdentifier* id = static_cast<AstIdentifier*>(let->get_id());
 			// Get the type of the value in the let statement
+			/*
+			if(let->get_val()->get_type()==AST_LAMBDA) {
+				vector<Type*> args;
+				args.push_back(VariableType::make("alpha1"));
+				args.push_back(VariableType::make("alpha2"));
+				Type* type = FunctionType::make(id->get_id(), args);
+				type_tab.push();
+				type_tab.add(id, type);
+				res = infer(let->get_body());
+				type_tab.pop();
+				break;
+			}
+			*/
 			Type* type = infer(let->get_val());
 			type_tab.push();
 			// Add the type of the variable to the Type Enviornment
@@ -137,39 +153,54 @@ Type* TypeInference::infer(Expression *e){
 		}
 		case AST_EXPRESSION_LIST:
 		{
-			/*
 			AstExpressionList* list = static_cast<AstExpressionList*>(e);
 			vector<Expression*> exps = list->get_expressions();
 			if(infer(exps[0])->get_kind() != TYPE_FUNCTION)
 				reportError("Only lambda expressions can be applied to other expressions");
-			Expression* exp_lambda = exps[0];
-			int counter = 0;
-			while(exp_lambda->get_type()==AST_LAMBDA) {
-				counter++;
-				exp_lambda = static_cast<AstLambda*>(exp_lambda)->get_body();
+
+			vector<Type*> inferences;
+			for(int i=0; i<exps.size(); ++i) {
+				inferences.push_back(infer(exps[i]));
 			}
-			for(int i=0; i<exps.size()-1; i++) {
-				if(i==0)
-					lambda = static_cast<AstLambda*>(exps[0]);
-				else {
-					if(infer(lambda->get_body())->get_kind() == TYPE_FUNCTION) {
-						counter++;
-						lambda = static_cast<AstLambda*>(lambda->get_body());
+			vector<Type*> argTypes = static_cast<FunctionType*>(inferences[0])->get_args();
+			inferences.erase(inferences.begin());
+
+			while(inferences.size()>0 && argTypes.size()>1) {
+				Type* argType = argTypes[0];
+				argTypes.erase(argTypes.begin());
+				bool matches;
+				if(argType->get_kind()==TYPE_VARIABLE) {
+					VariableType* varArg = static_cast<VariableType*>(argType);
+					if(inferences[0]->get_kind()==TYPE_CONSTANT &&
+						(static_cast<ConstantType*>(inferences[0]))->get_constant_type()==INT_CONSTANT) {
+						matches = varArg->doTypesMatch(inferences[0]->get_kind(),1);
 					}
-					else
-						reportError("Only lambda expressions can be applied to other expressions");
+					else {
+						matches = varArg->doTypesMatch(inferences[0]->get_kind(),0);
+					}
 				}
-				AstIdentifier* id = lambda->get_formal();
-				type_tab.push();
-				type_tab.add(id, infer(exps[exps.size()-1-i])->get_kind());
+				else {
+					matches = argType->get_kind()==inferences[0]->get_kind();
+				}
+				if(!matches)
+					reportError("Invalid application for expression list");
+				if(inferences[0]->get_kind()==TYPE_FUNCTION) {
+					argTypes.pop_back();
+					vector<Type*> funcArgs = static_cast<FunctionType*>(inferences[0])->get_args();
+					for(int j=0; j<funcArgs.size(); ++j) {
+						argTypes.push_back(funcArgs[j]);
+					}
+				}
+				inferences.erase(inferences.begin());
 			}
-			if(counter<exps.size()-1) {
-				//TODO
+			if(inferences.size()>0) {
+				reportError("Too many applications for number of lambda arguments");
 			}
-			else if(counter>exps.size()-1) {
-				reportError("Only lambda expressions can be applied to other expressions");
+			if(argTypes.size()==1)
+				res = argTypes[0];
+			else {
+				res = FunctionType::make("application",argTypes);
 			}
-			*/
 			break;
 		}
 		case AST_BRANCH:
@@ -236,11 +267,16 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 		// If both Expressions are of Variable Type
 		if(infer_e1->get_kind() == TYPE_VARIABLE &&
 			infer_e2->get_kind() == TYPE_VARIABLE) {
+			// Set constraints for both VariableType expressions
+			(static_cast<VariableType*>(infer_e1))->makeConstraintsForBinOp(CONS);
+			(static_cast<VariableType*>(infer_e2))->makeConstraintsForBinOp(CONS2);
 			// Return a VariableType
 			return VariableType::make("list");
 		}
 		// If only the first Expression is of VariableType
 		if(infer_e1->get_kind() == TYPE_VARIABLE) {
+			// Set constraints for VariableType expression
+			(static_cast<VariableType*>(infer_e1))->makeConstraintsForBinOp(CONS);
 			// If the second Expression is Constant
 			if(infer_e2->get_kind() == TYPE_CONSTANT){
 				// Set The ListType according to the respective ConstantType
@@ -275,6 +311,8 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 		}
 		// If the second Expression is of VariableType
 		if(infer_e2->get_kind() == TYPE_VARIABLE) {
+			//Set constraints for VariableType expression
+			(static_cast<VariableType*>(infer_e2))->makeConstraintsForBinOp(CONS2);
 			// If the first Expression is of ConstantType
 			if(infer_e1->get_kind() == TYPE_CONSTANT) {
 				// Set The ListType according to the respective ConstantType
@@ -341,6 +379,11 @@ Type* TypeInference::infer_binop(AstBinOp *e){
 	infer_e1 = infer_e1->find();
 	// If Both are Variable type return a variable type
 	if(infer_e1->get_kind()==TYPE_VARIABLE) {
+		// Set constraints for both VariableType expressions
+		VariableType* vtype_e1 = static_cast<VariableType*>(infer_e1);
+		VariableType* vtype_e2 = static_cast<VariableType*>(infer_e2);
+		vtype_e1->makeConstraintsForBinOp(e->get_binop_type());
+		vtype_e2->makeConstraintsForBinOp(e->get_binop_type());
 		return infer_e1;
 	}
 	// If the BinOp is PLUS

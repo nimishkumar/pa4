@@ -32,7 +32,22 @@ bool VariableType::operator<(const Type& other)
 
 string VariableType::to_string()
 {
-  return "VariableType(" + name + ")";
+	/*
+	string stuff = "\n";
+	if(constraints[NI])
+		stuff += "NIL\n";
+	if(constraints[IN])
+		stuff += "INT\n";
+	if(constraints[STR])
+		stuff += "STR\n";
+	if(constraints[INL])
+		stuff += "INTLIST\n";
+	if(constraints[STRL])
+		stuff += "STRLIST\n";
+	if(constraints[FU])
+		stuff += "FUNCTION\n";
+		*/
+  return "VariableType(" + name + ")"; 
 }
 
 void VariableType::makeConstraintsForBinOp(binop_type bt){
