@@ -97,6 +97,7 @@ Type* TypeInference::infer(Expression *e){
 		case AST_LAMBDA:			//case 3
 		{
 			AstLambda* lambda = static_cast<AstLambda*>(e);
+			cout << e->to_string() << endl;
 			AstIdentifier* id = lambda->get_formal();
 			vector<Type*> args;
 			// Set the parameter for the Lambda as a Variable Type
@@ -154,7 +155,9 @@ Type* TypeInference::infer(Expression *e){
 		case AST_EXPRESSION_LIST:
 		{
 			AstExpressionList* list = static_cast<AstExpressionList*>(e);
+			cout << e->to_string() <<endl;
 			vector<Expression*> exps = list->get_expressions();
+			cout << infer(exps[0])->get_kind() << endl;
 			if(infer(exps[0])->get_kind() != TYPE_FUNCTION)
 				reportError("Only lambda expressions can be applied to other expressions");
 
@@ -162,45 +165,65 @@ Type* TypeInference::infer(Expression *e){
 			for(int i=0; i<exps.size(); ++i) {
 				inferences.push_back(infer(exps[i]));
 			}
-			vector<Type*> argTypes = static_cast<FunctionType*>(inferences[0])->get_args();
-			inferences.erase(inferences.begin());
 
-			while(inferences.size()>0 && argTypes.size()>1) {
-				Type* argType = argTypes[0];
-				argTypes.erase(argTypes.begin());
+			int argTypsCounter = 0;
+			int inferencesCounter = 0;
+
+			vector<Type*> argTypes = static_cast<FunctionType*>(inferences[0])->get_args();
+			//inferences.erase(inferences.begin());
+			inferencesCounter++;
+
+			while(inferences.size()!=inferencesCounter && argTypes.size()-1!=argTypsCounter) {
+				Type* argType = argTypes[argTypsCounter];
+				//argTypes.erase(argTypes.begin());
 				bool matches;
 				if(argType->get_kind()==TYPE_VARIABLE) {
 					VariableType* varArg = static_cast<VariableType*>(argType);
-					if(inferences[0]->get_kind()==TYPE_CONSTANT &&
-						(static_cast<ConstantType*>(inferences[0]))->get_constant_type()==INT_CONSTANT) {
-						matches = varArg->doTypesMatch(inferences[0]->get_kind(),1);
+					if(inferences[inferencesCounter]->get_kind()==TYPE_CONSTANT &&
+						(static_cast<ConstantType*>(inferences[inferencesCounter]))->get_constant_type()==INT_CONSTANT) {
+						matches = varArg->doTypesMatch(inferences[inferencesCounter]->get_kind(),1);
 					}
 					else {
-						matches = varArg->doTypesMatch(inferences[0]->get_kind(),0);
+						matches = varArg->doTypesMatch(inferences[inferencesCounter]->get_kind(),0);
 					}
 				}
 				else {
-					matches = argType->get_kind()==inferences[0]->get_kind();
+					matches = argType->get_kind()==inferences[inferencesCounter]->get_kind();
 				}
 				if(!matches)
 					reportError("Invalid application for expression list");
-				if(inferences[0]->get_kind()==TYPE_FUNCTION) {
+				if(inferences[inferencesCounter]->get_kind()==TYPE_FUNCTION) {
 					argTypes.pop_back();
-					vector<Type*> funcArgs = static_cast<FunctionType*>(inferences[0])->get_args();
+					vector<Type*> funcArgs = static_cast<FunctionType*>(inferences[inferencesCounter])->get_args();
 					for(int j=0; j<funcArgs.size(); ++j) {
 						argTypes.push_back(funcArgs[j]);
 					}
 				}
-				inferences.erase(inferences.begin());
+				//inferences.erase(inferences.begin());
+				inferencesCounter++;
+				argTypsCounter++;
 			}
-			if(inferences.size()>0) {
+			if(inferences.size()!=inferencesCounter) {
 				reportError("Too many applications for number of lambda arguments");
 			}
-			if(argTypes.size()==1)
-				res = argTypes[0];
+			if(argTypes.size()-1==argTypsCounter){
+				res = argTypes[argTypsCounter];
+				//res->to_string();
+			}
 			else {
 				res = FunctionType::make("application",argTypes);
 			}
+			cout << inferencesCounter << endl;
+			cout << argTypsCounter << endl;
+			for(int i=1;i<inferencesCounter;i++){
+				cout << "HUHHUH" << endl;
+				if(argTypes[i-1]->find() == res){
+					res = inferences[i];
+					cout << "WHATWHATWHAT" << endl;
+					break;
+				}
+			}
+			cout << "PLEASE EXPLAIN THIS WITHCH" << endl;
 			break;
 		}
 		case AST_BRANCH:
