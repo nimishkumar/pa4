@@ -46,17 +46,18 @@ const string & FunctionType::get_name()
 
 string FunctionType::to_string()
 {
-  string res = name + "(";
+  //string res = name + "(";
+	string res = "";
   for(auto it = args.begin(); it != args.end(); it++)
   {
     res += (*it)->to_string();
     auto next = it;
     next++;
     if(next != args.end()) {
-     res += ", "; 
+     res += " -> "; 
     }
   }
-  res += ")";
+  //res += ")";
   return res;
   
   
