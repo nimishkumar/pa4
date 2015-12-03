@@ -180,6 +180,33 @@ void VariableType::checkConstraints(){
 	exit(1);
 }
 
-bool VariableType::doTypesMatch(type_kind tk){
+bool VariableType::doTypesMatch(type_kind tk,int constant){
+	switch(tk){
+		case TYPE_USERDEFINED: {
+			// Not sure yet how this shall work
+			break;
+		}
+		case TYPE_NIL: {
+			return constraints[NI];
+		}
+		case TYPE_CONSTANT: {
+			if(constant)
+				return constraints[IN];
+			return constraints[STR];
+		}
+		case TYPE_INT_LIST: {
+			return constraints[INL];
+		}
+		case TYPE_STRING_LIST: {
+			return constraints[STRL];
+		}
+		case TYPE_FUNCTION: {
+			return constraints[FU];
+		}
+		case TYPE_VARIABLE: {
+			// not sure exactly how this one should be made
+			break;
+		}
+	}
 	return false;
 }

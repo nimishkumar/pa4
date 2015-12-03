@@ -33,7 +33,8 @@ public:
 	void makeConstraintsForBinOp(binop_type bt);
 	void makeConstraintsForUnOp(unop_type ut);
 	void checkConstraints();
-	bool doTypesMatch(type_kind tk);
+	// constant is used to specify an int or a string for ConstantType
+	bool doTypesMatch(type_kind tk,int constant);
 };
  
  
