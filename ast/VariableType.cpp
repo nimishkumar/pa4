@@ -151,10 +151,12 @@ void VariableType::makeConstraintsForBinOp(binop_type bt){
 			constraints[INL] = false;
 			constraints[STRL] = false;
 			constraints[FU] = false;
+			break;
 		}
 		case CONS2: {
 			constraints[NI] = false;
 			constraints[FU] = false;
+			break;
 		}
 		default:
 			cout << "ERROR : BINOP TYPE NOT KNOWN" << endl;
