@@ -15,48 +15,8 @@ TypeInference::TypeInference(Expression * e)
 	// Do Type Inference
 	Type* t = infer(e);
 	// Print the final Return Type
-	cout << "res = " << t->to_string() << endl;
+	cout << "Final Type = " << t->to_string() << endl;
 	Type::print_all_types();
-/*
-	Type* t1 = ConstantType::make("Int");
-	Type* t2 = ConstantType::make("String");
-	Type* t3 = ConstantType::make("Int");
-	Type* var1 = VariableType::make("x");
-	cout << t1->to_string() << " " << t1 << endl;
-	cout << t2->to_string() << " " << t2 << endl;
-	cout << t3->to_string() << " " << t3 << endl;
-	vector<Type*> v1;
-	v1.push_back(var1);
-	v1.push_back(t2);
-
-	vector<Type*> v2;
-	v2.push_back(t3);
-	v2.push_back(t2);
-
-	Type* t4 = FunctionType::make("fun", v1);
-	Type* t5 = FunctionType::make("fun", v2);
-	cout << t4->to_string() << " " << t4 << endl;
-	cout << t5->to_string() << " " << t5 << endl;
-	
-	//prints all types & reps in table
-	Type::print_all_types();
-
-	{
-		Type* t1 = t4;
-		Type* t2 = t5;
-
-		cout << "Type 1:" << t1->to_string() << "Rep: " << t1->find()->to_string() << endl;
-		cout <<	"Type 2:" << t2->to_string() << "Rep: " << t2->find()->to_string() << endl;
-
-		cout << "unify: " << t1->unify(t2) << endl;
-
-		cout << "Type 1:" << t1->to_string() << "Rep: " << t1->find()->to_string() << endl;
-		cout <<	"Type 2:" << t2->to_string() << "Rep: " << t2->find()->to_string() << endl;
-	} cout << "Type 1:" << t1->to_string() << "Rep: " << t1->find()->to_string() << endl; cout <<	"Type 2:" << var1->to_string() << "Rep: " << var1->find()->to_string() << endl;
-
-	
-	Type::print_all_types();
-*/
 }
 
 void TypeInference::reportError(string err){
@@ -97,7 +57,6 @@ Type* TypeInference::infer(Expression *e){
 		case AST_LAMBDA:			//case 3
 		{
 			AstLambda* lambda = static_cast<AstLambda*>(e);
-			cout << e->to_string() << endl;
 			AstIdentifier* id = lambda->get_formal();
 			vector<Type*> args;
 			// Set the parameter for the Lambda as a Variable Type
@@ -120,19 +79,6 @@ Type* TypeInference::infer(Expression *e){
 			AstLet* let = static_cast<AstLet*>(e);
 			AstIdentifier* id = static_cast<AstIdentifier*>(let->get_id());
 			// Get the type of the value in the let statement
-			/*
-			if(let->get_val()->get_type()==AST_LAMBDA) {
-				vector<Type*> args;
-				args.push_back(VariableType::make("alpha1"));
-				args.push_back(VariableType::make("alpha2"));
-				Type* type = FunctionType::make(id->get_id(), args);
-				type_tab.push();
-				type_tab.add(id, type);
-				res = infer(let->get_body());
-				type_tab.pop();
-				break;
-			}
-			*/
 			Type* type = infer(let->get_val());
 			type_tab.push();
 			// Add the type of the variable to the Type Enviornment
@@ -148,41 +94,36 @@ Type* TypeInference::infer(Expression *e){
 			res = ConstantType::make("string", STRING_CONSTANT);
 			break;
 		}
-		case AST_IDENTIFIER_LIST:
-		{
-			break;
-		}
 		case AST_EXPRESSION_LIST:
 		{
 			AstExpressionList* list = static_cast<AstExpressionList*>(e);
-			
-			cout << e->to_string() <<endl;
+			// Get all of the expressions in the application
 			vector<Expression*> exps = list->get_expressions();
-			cout << infer(exps[0])->get_kind() << endl;
-			
+			// If the first expression is of variable type return a variable type
+			// This is used for the case that the function being called has not been infered yet
 			if(infer(exps[0])->get_kind() == TYPE_VARIABLE)
-				return VariableType::make("Test");
+				return VariableType::make("To be Implemented");
+			// If the first expression is not of function type report an error
 			if(infer(exps[0])->get_kind() != TYPE_FUNCTION)
 				reportError("Only lambda expressions can be applied to other expressions");
-
+			// Infer on all of the expressions
 			vector<Type*> inferences;
 			for(int i=0; i<exps.size(); ++i) {
 				inferences.push_back(infer(exps[i]));
 			}
-
 			int argTypsCounter = 0;
 			int inferencesCounter = 0;
-
+			// Get the arguements for the initial Function Type
 			vector<Type*> argTypes = static_cast<FunctionType*>(inferences[0])->get_args();
-			//inferences.erase(inferences.begin());
 			inferencesCounter++;
-
+			// Run while there are still Expressions to apply or arguements to take expressions
 			while(inferences.size()!=inferencesCounter && argTypes.size()-1!=argTypsCounter) {
 				Type* argType = argTypes[argTypsCounter];
-				//argTypes.erase(argTypes.begin());
 				bool matches;
+				// If the arguement is of variable type
 				if(argType->get_kind()==TYPE_VARIABLE) {
 					VariableType* varArg = static_cast<VariableType*>(argType);
+					// Get if the arguement's Type constraints and the expression's Type match
 					if(inferences[inferencesCounter]->get_kind()==TYPE_CONSTANT &&
 						(static_cast<ConstantType*>(inferences[inferencesCounter]))->get_constant_type()==INT_CONSTANT) {
 						matches = varArg->doTypesMatch(inferences[inferencesCounter]->get_kind(),1);
@@ -192,42 +133,49 @@ Type* TypeInference::infer(Expression *e){
 					}
 				}
 				else {
+					// Else get if the arguement's Type and the expression's Type match
 					matches = argType->get_kind()==inferences[inferencesCounter]->get_kind();
 				}
+				// If there was no match then there is a possible runtime error reports an error
 				if(!matches)
 					reportError("Invalid application for expression list");
+				// If the expression's Type is a Function Type
 				if(inferences[inferencesCounter]->get_kind()==TYPE_FUNCTION) {
+					// Remove the old Return Type
 					argTypes.pop_back();
+					// Push back all of the arguements for the new function into the arguement list
 					vector<Type*> funcArgs = static_cast<FunctionType*>(inferences[inferencesCounter])->get_args();
 					for(int j=0; j<funcArgs.size(); ++j) {
 						argTypes.push_back(funcArgs[j]);
 					}
 				}
-				//inferences.erase(inferences.begin());
 				inferencesCounter++;
 				argTypsCounter++;
 			}
+			// Report an error if there were too many expressions for the application
 			if(inferences.size()!=inferencesCounter) {
 				reportError("Too many applications for number of lambda arguments");
 			}
+			// If there is only one arguement left (the return type) set it to the type of the last arguement
 			if(argTypes.size()-1==argTypsCounter){
 				res = argTypes[argTypsCounter];
-				//res->to_string();
 			}
+			// Else create a function type as a return type with the remaining arguements
 			else {
-				res = FunctionType::make("application",argTypes);
+				vector<Type *> argss;
+				for(int i=argTypsCounter;i<argTypes.size();i++)
+					argss.push_back(argTypes[i]);
+				res = FunctionType::make("application",argss);
 			}
-			cout << inferencesCounter << endl;
-			cout << argTypsCounter << endl;
+			// For all of the expressions that were applied
 			for(int i=1;i<inferencesCounter;i++){
-				cout << "HUHHUH" << endl;
+				// If the head of the expression Type's equivalence class is the return type
 				if(argTypes[i-1]->find() == res){
+					// Set the return type to that instance
 					res = inferences[i];
-					cout << "WHATWHATWHAT" << endl;
 					break;
 				}
 			}
-			cout << "PLEASE EXPLAIN THIS WITHCH" << endl;
 			break;
 		}
 		case AST_BRANCH:
@@ -248,17 +196,14 @@ Type* TypeInference::infer(Expression *e){
 			// Verify that both branches return the same type
 			if(t2->get_kind()!=t3->get_kind()) {
 				reportError("Then and Else types in conditional must match");
+			}else{
+				res = t2;
 			}
-			res = t2;
 			break;
 		}
 		case AST_NIL:
 		{
 			res = NilType::make("nil");
-			break;
-		}
-		case AST_LIST:
-		{
 			break;
 		}
 		case AST_UNOP:
