@@ -155,9 +155,13 @@ Type* TypeInference::infer(Expression *e){
 		case AST_EXPRESSION_LIST:
 		{
 			AstExpressionList* list = static_cast<AstExpressionList*>(e);
+			
 			cout << e->to_string() <<endl;
 			vector<Expression*> exps = list->get_expressions();
 			cout << infer(exps[0])->get_kind() << endl;
+			
+			if(infer(exps[0])->get_kind() == TYPE_VARIABLE)
+				return VariableType::make("Test");
 			if(infer(exps[0])->get_kind() != TYPE_FUNCTION)
 				reportError("Only lambda expressions can be applied to other expressions");
 
